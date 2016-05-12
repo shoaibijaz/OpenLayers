@@ -14,34 +14,9 @@
 
         <!-- Sidebar -->
         <div id="sidebar-wrapper">
-            <ul class="sidebar-nav">
-                <li class="sidebar-brand">
-                    <a href="#">
-                        Start Bootstrap
-                    </a>
-                </li>
-                <li>
-                    <a href="#">Dashboard</a>
-                </li>
-                <li>
-                    <a href="#">Shortcuts</a>
-                </li>
-                <li>
-                    <a href="#">Overview</a>
-                </li>
-                <li>
-                    <a href="#">Events</a>
-                </li>
-                <li>
-                    <a href="#">About</a>
-                </li>
-                <li>
-                    <a href="#">Services</a>
-                </li>
-                <li>
-                    <a href="#">Contact</a>
-                </li>
-            </ul>
+
+            <div class="btn-action"><i class="glyphicon glyphicon-plus"></i> <span>Add Layer </span></div>
+            <ul class="sidebar-nav"></ul>
         </div>
         <!-- /#sidebar-wrapper -->
         <!-- Page Content -->
@@ -58,6 +33,20 @@
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     <script src="~/Scripts/ol-debug.js"></script>
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $(".map-action").click(function () {
+                var hasClass = $(this).hasClass("active");
+                $(".map-action").removeClass("active");
+
+                if (!hasClass)
+                    $(this).addClass("active");
+            });
+        });
+
+    </script>
     @RenderSection("scripts", required: false)
 </body>
 </html>
