@@ -4,48 +4,117 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - My ASP.NET Application</title>
-    @Styles.Render("~/Content/css")
+
+    <script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+    <link href="/content/css/bootstrap.min.css" rel='stylesheet' type='text/css' />
+    <link href="/content/css/style.css" rel='stylesheet' type='text/css' />
+    <link href="/content/css/font-awesome.css" rel="stylesheet">
+    <link href="~/content/js/uniform/css/uniform.default.min.css" rel="stylesheet">
+
+
+    <link href="/content/css/custom.css" rel="stylesheet">
+
     <link href="~/Content/ol.css" rel="stylesheet" />
-    @Scripts.Render("~/bundles/modernizr")
+
 </head>
 <body>
-
     <div id="wrapper">
+        <!----->
+        <nav class="navbar-default navbar-static-top" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <h1> <a class="navbar-brand" href="javascript:;">Minimal</a></h1>
+            </div>
+            <div class="border-bottom">
+                <div class="full-left">
+                    <section class="full-top" style="width:100%;">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <select class="form-control" id="ddlLayers">
+                                    <option>Select Layer</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-9">
+                                <button class="btn btn-icon-only green btn-action" action="addlayer" data-toggle="tooltip" data-placement="right" title="Add Shape File">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                                <button class="btn btn-icon-only green btn-action" action="show-shapefile-panel" data-toggle="tooltip" data-placement="right" title="Load Shape File">
+                                    <i class="fa fa-th-large"></i>
+                                </button>
+                                <button class="btn btn-icon-only green btn-action" action="enable-drag-pan" data-toggle="tooltip" data-placement="right" title="Drag Tool">
+                                    <i class="fa fa-hand-stop-o"></i>
+                                </button>
+                                <button class="btn btn-icon-only green btn-action" action="remove-layer" data-toggle="tooltip" data-placement="right" title="Delete Selected Layer">
+                                    <i class="fa fa-trash-o"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <div class="clearfix"> </div>
+                <div class="navbar-default sidebar" role="navigation">
+                    <div class="sidebar-nav navbar-collapse">
+                        <ul class="nav" id="left-side-menu">
+                            @*<li>
+                                <a href="javascript:;" class="">
+                                    <input type="checkbox" />
+                                    <span class="nav-label">Dashboards</span>
+                                </a>
+                            </li>*@
+                          
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Sidebar -->
-        <div id="sidebar-wrapper">
-
-            <div class="btn-action"><i class="glyphicon glyphicon-plus"></i> <span>Add Layer </span></div>
-            <ul class="sidebar-nav"></ul>
-        </div>
-        <!-- /#sidebar-wrapper -->
-        <!-- Page Content -->
-        <div id="page-content-wrapper">
-            <div class="container-fluid">
+            <div class="clearfix">
+            </div>
+        </nav>
+        <div id="page-wrapper" class="gray-bg dashbard-1">
+            <div class="content-main">
                 @RenderBody()
             </div>
+            <div class="clearfix"> </div>
         </div>
-        <!-- /#page-content-wrapper -->
-
     </div>
-    <!-- /#wrapper -->
 
-    @Scripts.Render("~/bundles/jquery")
-    @Scripts.Render("~/bundles/bootstrap")
-    <script src="~/Scripts/ol-debug.js"></script>
+    <script src="/content/js/jquery.min.js"> </script>
+    <script src="/content/js/jquery.slimscroll.min.js"></script>
+    <script src="/content/js/custom.js"></script>
+    <script src="/content/js/screenfull.js"></script>
+    <script src="/content/js/skycons.js"></script>
+    <script src="/Scripts/jquery-ui-1.11.4.min.js"></script>
+    <script src="/content/js/jquery.nicescroll.js"></script>
+
+    <script src="/Content/js/uniform/jquery.uniform.min.js"></script>
+
+    <script src="/content/js/scripts.js"></script>
+    <!--//scrolling js-->
+
+    <script src="/content/js/bootstrap.min.js"> </script>
+
+    <script src="/Scripts/ol-debug.js"></script>
+    <script src="/Scripts/jquery.iframe-transport.js"></script>
+    <script src="/Scripts/jquery.fileupload.js"></script>
 
     <script type="text/javascript">
+        $(function () {
+            $('#supported').text('Supported/allowed: ' + !!screenfull.enabled);
 
-        $(document).ready(function () {
-            $(".map-action").click(function () {
-                var hasClass = $(this).hasClass("active");
-                $(".map-action").removeClass("active");
-
-                if (!hasClass)
-                    $(this).addClass("active");
+            if (!screenfull.enabled) {
+                return false;
+            }
+            $('#toggle').click(function () {
+                screenfull.toggle($('#container')[0]);
             });
-        });
 
+            $('[data-toggle="tooltip"]').tooltip();
+        });
     </script>
     @RenderSection("scripts", required: false)
 </body>

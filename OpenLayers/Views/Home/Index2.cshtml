@@ -1,0 +1,276 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - My ASP.NET Application</title>
+    @Styles.Render("~/Content/css")
+    <link href="~/Content/ol.css" rel="stylesheet" />
+    <link href="~/Scripts/uniform/css/uniform.default.min.css" rel="stylesheet">
+    <link href="/content/css/font-awesome.css" rel="stylesheet">
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body class="bg-blue">
+    <div class="container-full ">
+        <div class="navbar blue margin-bottom-0">
+            <div class="nav navbar-nav" style="width:100%;">
+                <div id="btn-left-layers">
+                    <a href="javascript:;"><i class="fa fa-sign-out"></i></a>
+                </div>
+
+                <div id="btn-right-layers">
+                    <a href="javascript:;"><i class="fa fa-sign-in fa-rotate-180"></i></a>
+                </div>
+                @*<ul class="navbar-ul">
+                        <li>
+
+                        </li>
+                        <li>
+                            <select class="form-control" id="ddlLayers">
+                                <option>Select Layer</option>
+                            </select>
+                        </li>
+                    </ul>*@
+
+                @*<div class="pull-left margin-right-10 margin-left-10 margin-top-7">
+
+                    </div>
+                    <div class="pull-left margin-top-7">
+                        <button class="btn btn-icon-only green btn-action" action="addlayer" data-toggle="tooltip" data-placement="right" title="Add Shape File">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                        <button class="btn btn-icon-only green btn-action" action="loadshapefile" data-toggle="tooltip" data-placement="right" title="Load Shape File">
+                            <i class="fa fa-th-large"></i>
+                        </button>
+                    </div>*@
+
+            </div>
+        </div>
+        <div class="right-slide" id="predefined-files">
+            <ul>
+                <li></li>
+            </ul>
+        </div>
+        <div class="jumbotron text-center margin-0 padding-0">
+            <div id="map" class="map">
+            </div>
+        </div>
+
+
+    </div> <!-- /container full -->
+
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script src="~/Scripts/ol-debug.js"></script>
+    <script src="~/Scripts/uniform/jquery.uniform.min.js"></script>
+
+    <script type="text/javascript">
+        (function ($) {
+
+            //Base Map Class
+            var BaseMap = function (name, layerTile) {
+                this.Name = name;
+                this.LayerTile = layerTile;
+            };
+
+            //Shape File Class
+            var ShapeFile = function () {
+
+            };
+
+            ShapeFile.prototype.getPredefinedFiles = function () {
+
+                var files = [];
+
+                $.get('/files/GetPerdefinedShapeFiles', function (response) {
+                    if (response) {
+                        var files = $.parseJSON(response);
+                        new ShapeFile().createPopup(files);
+                    }
+                });
+
+                return files;
+            };
+
+            ShapeFile.prototype.createPopup = function (files) {
+
+                var slide = $("#predefined-files > ul");
+                slide.empty();
+
+                $.each(files, function (index, item) {
+                    slide.append($("<li />", { text: item }));
+                })
+
+            };
+
+            ShapeFile.prototype.load = function (file, map) {
+
+                $.post("/files/LoadPerdefinedShapeFile", { id: file }, function (response) {
+                    if (response) {
+
+                        var vectorSource = new ol.source.Vector({
+                            features: (new ol.format.GeoJSON()).readFeatures(response)
+                        });
+
+                        var vectorLayer = new ol.layer.Vector({
+                            source: vectorSource
+                        });
+
+                        map.addLayer(vectorLayer);
+
+                        map.getView().fit(vectorLayer.getSource().getExtent(), map.getSize());
+                    }
+                });
+
+            };
+
+            $.geoMap = function (options) {
+
+                var vectorsLayersList = [], baseMapsList = [], predefinesShapeFiles = [];
+                var map;
+
+                var plugin = this;
+
+                var shapeFileObject = new ShapeFile();
+
+                var settings = $.extend({
+                    mapElement: 'map',
+                    center: [-49.7602708, -22.3869608],
+                    zoom: 5,
+                    projection: 'EPSG:4326'
+                }, options);
+
+                // private functions
+
+                var fillBaseMapList = function () {
+
+                    var bingAerialTile = new ol.layer.Tile({
+                        source: new ol.source.BingMaps({
+                            key: 'ArmnlTzo_1usdZuFmow2VUSp4Jd019NXZ7l6FE4zEeXiZ2IfGL6D2rf8JTTBmfeX',
+                            imagerySet: 'Aerial'
+                        })
+                    });
+
+                    var osmTile = new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    });
+
+                    bingAerialTile.getSource().on('change', onBaseMapTileChange);
+                    osmTile.getSource().on('change', onBaseMapTileChange);
+
+                    baseMapsList = [bingAerialTile, osmTile];
+
+                    var ddlLayer = $("#ddlLayers");
+                    ddlLayer.empty();
+
+                    ddlLayer.append($("<option />", { value: 0, text: 'Bing Aerial Map' }));
+                    ddlLayer.append($("<option />", { value: 1, text: 'OSM' }));
+
+                }
+
+                var bindEvents = function () {
+                    $("#ddlLayers").change(function () {
+                        if ($(this).val()) {
+                            toggleLayer($(this).val());
+                        }
+                    });
+
+                    $("div").on('click', '#predefined-files ul li', function (e) {
+                        e.stopPropagation();
+                        var text = $.trim($(this).text());
+                        if (text) {
+                            shapeFileObject.load(text, map);
+                        }
+                    });
+                }
+
+                var onBaseMapTileChange = function () {
+                    if (this.getState() == 'ready') {
+                    }
+                }
+
+                var toggleLayer = function (index) {
+                    for (i = 0; i < baseMapsList.length; i++) {
+                        baseMapsList[i].setVisible(false);
+                    }
+
+                    baseMapsList[index].setVisible(true);
+                }
+
+                // end private functions
+
+                // public functions
+
+                this.addVectorLayer = function () {
+
+
+                }
+
+                var init = function () {
+
+                    fillBaseMapList();
+
+                    $("#" + settings.mapElement).height($(window).height() - 52);
+
+                    map = new ol.Map({
+                        layers: baseMapsList,
+                        target: settings.mapElement,
+                        view: new ol.View({
+                            center: settings.center,
+                            zoom: settings.zoom,
+                            projection: settings.projection
+                        })
+                    });
+
+                    toggleLayer(0);
+
+                    bindEvents();
+
+                    predefinesShapeFiles = shapeFileObject.getPredefinedFiles();
+
+                }
+
+                init();
+
+            };
+
+        }(jQuery));
+
+
+        $(document).ready(function () {
+
+            $("input:checkbox").uniform();
+
+            var geoMap = new $.geoMap();
+
+            $("#btn-left-layers").click(function () {
+                var i = $(this).find("i");
+                var isShow = i.hasClass('fa-rotate-180');
+                i.toggleClass('fa-rotate-180')
+            });
+
+
+            $("#btn-right-layers").click(function () {
+                var i = $(this).find("i");
+                var isShow = i.hasClass('fa-rotate-180');
+
+                i.toggleClass('fa-rotate-180')
+            });
+
+            $(".btn-action").click(function () {
+                var action = $(this).attr("action");
+                if (action == 'addlayer') {
+                    geoMap.addVectorLayer();
+                }
+            });
+
+        });
+
+    </script>
+</body>
+</html>

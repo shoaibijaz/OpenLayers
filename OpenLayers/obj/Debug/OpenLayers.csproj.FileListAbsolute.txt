@@ -38,3 +38,10 @@ c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers
 c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\obj\Debug\OpenLayers.csprojResolveAssemblyReference.cache
 c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\obj\Debug\OpenLayers.dll
 c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\obj\Debug\OpenLayers.pdb
+c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\bin\DotSpatial.Data.dll
+c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\bin\DotSpatial.Projections.dll
+c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\bin\DotSpatial.Topology.dll
+c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\bin\DotSpatial.Serialization.dll
+c:\users\shoaib.ijaz\documents\visual studio 2015\Projects\OpenLayers\OpenLayers\bin\DotSpatial.Mono.dll
+C:\Users\Shoaib.Ijaz\Documents\Visual Studio 2015\Projects\OpenLayers\OpenLayers\bin\GeoJSON.Net.dll
+C:\Users\Shoaib.Ijaz\Documents\Visual Studio 2015\Projects\OpenLayers\OpenLayers\bin\GeoJSON.Net.xml

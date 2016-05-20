@@ -2,42 +2,352 @@
     ViewBag.Title = "Home Page";
 }
 
-<div id="map" class="map"></div>
 
+<div class="grid-form">
+    <div class="grid-form1">
+        <div id="map" class="map"></div>
+    </div>
+</div>
+
+<div class="right-slide" id="predefined-files">
+    <div class="wrapper">
+        <button class="btn btn-icon-only red btn-action" action="hide-shapefile-panel">
+            <i class="fa fa-times"></i>
+        </button>
+
+        <ul>
+            <li></li>
+        </ul>
+    </div>
+</div>
 
 @section scripts{
     <script type="text/javascript">
         (function ($) {
 
-            $.fn.geoMap = function (options) {
+            //GLOBAL Options
+            var GLOBAL_OPTIONS = {
+                mapElement: 'map',
+                center: [-49.7602708, -22.3869608],
+                zoom: 5,
+                projection: 'EPSG:4326'
+            };
 
-                var selector = $(this).attr('id');
+            //Dynamic Elements, Menu Creator
+            var ElementCreator = {
+                createPredefinedFileMenu: function (files) {
+                    var slide = $("#predefined-files ul");
+                    slide.empty();
 
-                var settings = $.extend({
-                    center: ol.proj.transform([-1.81185, 52.44314], 'EPSG:4326', 'EPSG:3857'),
-                    zoom: 4
-                }, options);
+                    $.each(files, function (index, item) {
+                        slide.append($("<li />", { text: item }));
+                    });
+                },
+                createAddedLayersMenu: function (layers) {
+                    var menu = $("#left-side-menu");
+                    menu.empty();
 
-                var drawFeatureLayer = new ol.source.Vector({});
+                    for (i = layers.length - 1; i >= 0; i--) {
+                        var item = layers[i];
+                        menu.append(ElementCreator.layerListElement(i, item.name, item.selected));
+                    }
 
-                var tileLayer = new ol.layer.Tile({ source: new ol.source.OSM() });
 
-                var map = new ol.Map({
-                    layers: [tileLayer],
-                    target: selector,
+                    $("#left-side-menu li").removeClass("selected");
+                    $("#left-side-menu li").eq(0).addClass("selected");
+
+                    $("input:checkbox").uniform();
+                },
+                layerListElement: function (index, name, selected) {
+                    var li = $("<li />", { i: index });
+                    var anchor = $("<a />", { href: 'javascript:;' });
+                    var input = $("<input />", { type: 'checkbox', 'class': 'chkLayerState', checked: selected, value: index });
+                    var lbl = $("<span />", { 'class': "nav-label", text: name });
+                    anchor.html(input).append(lbl);
+                    li.html(anchor);
+                    return li;
+                }
+            };
+
+            //Map Vector Layer class
+            var MapVectorLayer = function (name, layer, selected) {
+                this.name = name;
+                this.layer = layer;
+                this.selected = selected;
+            }
+
+            //Base Map Class
+            var MapFrame = function () {
+                this.map;
+                this.baseMapsList = [];
+                this.vectorLayersList = [];
+            };
+
+            MapFrame.prototype.initMap = function () {
+
+                var baseMapArray = this.getBaseMapsList();
+
+                this.map = new ol.Map({
+                    layers: baseMapArray,
+                    target: GLOBAL_OPTIONS.mapElement,
                     view: new ol.View({
-                        center: settings.center,
-                        zoom: settings.zoom
+                        center: GLOBAL_OPTIONS.center,
+                        zoom: GLOBAL_OPTIONS.zoom,
+                        projection: GLOBAL_OPTIONS.projection
                     })
                 });
+
+                this.switchBaseMap(0);
+
+            };
+
+            MapFrame.prototype.getBaseMapsList = function () {
+
+                var bingAerialTile = new ol.layer.Tile({
+                    source: new ol.source.BingMaps({
+                        key: 'ArmnlTzo_1usdZuFmow2VUSp4Jd019NXZ7l6FE4zEeXiZ2IfGL6D2rf8JTTBmfeX',
+                        imagerySet: 'Aerial'
+                    })
+                });
+
+                var osmTile = new ol.layer.Tile({
+                    source: new ol.source.OSM()
+                });
+
+                this.baseMapsList = [{ name: "Bing Aerial Map", layer: bingAerialTile }, { name: "OSM", layer: osmTile }];
+
+                return [bingAerialTile, osmTile];
+
+            };
+
+            MapFrame.prototype.switchBaseMap = function (index) {
+
+                for (i = 0; i < this.baseMapsList.length; i++) {
+                    this.baseMapsList[i].layer.setVisible(false);
+                }
+
+                this.baseMapsList[index].layer.setVisible(true);
+
+            };
+
+            MapFrame.prototype.addVectorLayer = function (mapLayer) {
+                var layer = mapLayer.layer;
+                this.map.addLayer(layer);
+                this.map.getView().fit(layer.getSource().getExtent(), this.map.getSize());
+
+                this.vectorLayersList.push(mapLayer);
+                this.onAddVectorLayer();
+            };
+
+            MapFrame.prototype.disableDragPan = function () {
+                var dragPan;
+
+                this.map.getInteractions().forEach(function (interaction) {
+                    if (interaction instanceof ol.interaction.DragPan) {
+                        dragPan = interaction;
+                    }
+                }, this);
+
+                if (dragPan) {
+                    this.map.removeInteraction(dragPan);
+                }
+            };
+
+            MapFrame.prototype.enableDragPan = function () {
+                var dragPan = new ol.interaction.DragPan();
+                this.map.addInteraction(dragPan);
+            };
+
+            MapFrame.prototype.onAddVectorLayer = function () {
+                this.disableDragPan();
+                ElementCreator.createAddedLayersMenu(this.vectorLayersList);
+            };
+
+            MapFrame.prototype.removeSelectedVectorLayer = function () {
+                var layerItem = $("#left-side-menu li.selected");
+
+                var layer = this.vectorLayersList[layerItem.attr('i')];
+
+                this.map.removeLayer(layer.layer);
+
+                this.vectorLayersList.splice(layerItem.attr('i'), 1);
+
+                ElementCreator.createAddedLayersMenu(this.vectorLayersList);
+            };
+
+            //Shape File Class
+            var ShapeFile = function (mapFrame) {
+                this.mapFrameObject = mapFrame;
+            };
+
+            ShapeFile.prototype.getPredefinedFiles = function () {
+
+                var files = [];
+
+                $.get('/files/GetPerdefinedShapeFiles', function (response) {
+                    if (response) {
+                        var files = $.parseJSON(response);
+                        ElementCreator.createPredefinedFileMenu(files);
+                    }
+                });
+
+                return files;
+            };
+
+            ShapeFile.prototype.load = function (file) {
+
+                var map = this.mapFrameObject;
+
+                $.post("/files/LoadPerdefinedShapeFile", { id: file }, function (response) {
+                    if (response) {
+                        var vectorSource = new ol.source.Vector({
+                            features: (new ol.format.GeoJSON()).readFeatures(response)
+                        });
+
+                        var vectorLayer = new ol.layer.Vector({
+                            source: vectorSource
+                        });
+
+                        var mapLayer = new MapVectorLayer(file, vectorLayer, true);
+
+                        map.addVectorLayer(mapLayer);
+                    }
+                });
+
+            };
+
+            $.geoMap = function (options) {
+
+                var vectorsLayersList = [], baseMapsList = [], predefinesShapeFiles = [];
+                var map;
+
+                var plugin = this;
+
+                GLOBAL_OPTIONS = $.extend(GLOBAL_OPTIONS, options);
+
+                // instantiate classes
+                var mapFrameObject = new MapFrame();
+                var shapeFileObject; //ShapeFile
+
+                // private functions
+                var fillBaseMapList = function () {
+
+                    var ddlLayer = $("#ddlLayers");
+                    ddlLayer.empty();
+
+                    $.each(mapFrameObject.baseMapsList, function (index, item) {
+                        item.layer.getSource().on('change', onBaseMapTileChange);
+                        ddlLayer.append($("<option />", { value: index, text: item.name }));
+                    });
+
+                }
+
+                var bindEvents = function () {
+
+                    toggleShapfilePanel();
+
+                    $("#ddlLayers").change(function () {
+                        if ($(this).val()) {
+                            mapFrameObject.switchBaseMap($(this).val());
+                        }
+                    });
+
+                    $("div").on('click', '#predefined-files ul li', function (e) {
+                        e.stopPropagation();
+                        var text = $.trim($(this).text());
+
+                        if (text) {
+                            shapeFileObject.load(text);
+                        }
+                    });
+
+                    $("div").on('click', '.btn-action', function (e) {
+                        e.stopPropagation();
+                        var action = $(this).attr('action');
+                        selectAction(action);
+                        $(".btn-action").removeClass('selected');
+                        $(this).addClass('selected');
+                    });
+
+                    $("div").on('click', '#left-side-menu li', function (e) {
+                        e.stopPropagation();
+                        if (!$(event.target).is("input")) {
+                            $("#left-side-menu li").removeClass("selected");
+                            $(this).toggleClass("selected");
+                        }
+                    });
+
+                    $("div").on('change', '#left-side-menu li input', function (e) {
+                        e.stopPropagation();
+
+                        var checked = $(this).is(":checked");
+                        var index = $(this).val();
+                        mapFrameObject.vectorLayersList[index].selected = checked;
+                        mapFrameObject.vectorLayersList[index].layer.setVisible(checked);
+                    });
+                }
+
+                var onBaseMapTileChange = function () {
+                    if (this.getState() == 'ready') {
+                    }
+                }
+
+                var selectAction = function (action) {
+                    switch (action) {
+                        case "show-shapefile-panel":
+                            toggleShapfilePanel();
+                            break;
+                        case "hide-shapefile-panel":
+                            toggleShapfilePanel();
+                            break;
+                        case "enable-drag-pan":
+                            mapFrameObject.enableDragPan();
+                            break;
+                        case "remove-layer":
+                            mapFrameObject.removeSelectedVectorLayer();
+                            break;
+                    }
+                }
+
+                var toggleShapfilePanel = function () {
+                    $("#predefined-files").slideToggle();
+                }
+
+                // public functions
+
+                this.addVectorLayer = function () {
+
+
+                }
+
+                var init = function () {
+
+                    $("#" + GLOBAL_OPTIONS.mapElement).height($(window).height() - 75);
+
+                    mapFrameObject.initMap();
+
+                    fillBaseMapList();
+
+                    shapeFileObject = new ShapeFile(mapFrameObject);
+
+                    bindEvents();
+
+                    predefinesShapeFiles = shapeFileObject.getPredefinedFiles();
+
+                }
+
+                init();
 
             };
 
         }(jQuery));
 
-     
-        $(function () {
-        //    $("#map").geoMap();
+        $(document).ready(function () {
+
+            $("input:checkbox").uniform();
+
+            var geoMap = new $.geoMap();
+
         });
 
     </script>
